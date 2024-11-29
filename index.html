@@ -26,9 +26,9 @@
             padding-top: 20px;
             padding-bottom: 20px;
             user-select: none;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
         }
 
         .header {
@@ -73,11 +73,6 @@
             display: inline-block;
         }
 
-        .tooltip:hover .tooltip-text {
-            visibility: visible;
-            opacity: 1;
-        }
-
         .tooltip .tooltip-text {
             visibility: hidden;
             width: 300px;
@@ -117,7 +112,6 @@
             margin-top: -60px;
             width: 90vw;
             max-width: 1000px;
-            max-width: 1200px;  /* Agregar esta línea */
         }
 
         .camera-container, .result-container {
@@ -259,19 +253,18 @@
         }
 
         @media (min-width: 2560px) {
-    body {
-        padding-top: 120px;
-    }
-    
-    .container {
-        max-width: 1600px;
-    }
-    
-    .camera-container, .result-container {
-        width: 640px;
-    }
-}
-
+            body {
+                padding-top: 120px;
+            }
+            
+            .container {
+                max-width: 1600px;
+            }
+            
+            .camera-container, .result-container {
+                width: 640px;
+            }
+        }
 
         @media (max-width: 1024px) {
             .camera-container, .result-container {
@@ -282,6 +275,8 @@
         @media (max-width: 768px) {
             body {
                 padding-top: 40px;
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
             }
             .container {
                 flex-direction: column;
@@ -304,6 +299,11 @@
                 width: 80%;
                 left: 10%;
                 transform: none;
+            }
+            video, canvas {
+                aspect-ratio: 1/1;
+                object-fit: cover;
+                max-height: 90vw;
             }
         }
     </style>
@@ -328,16 +328,16 @@
         <div class="camera-container">
             <video id="video" autoplay playsinline></video>
             <div class="controls">
-                <button id="capture">📸 Sacar Foto</button>
-                <button id="retake" style="display: none;">🔄 Repetir Foto</button>
+                <button id="capture">Sacar Foto</button>
+                <button id="retake" style="display: none;">Repetir Foto</button>
             </div>
         </div>
         <div class="result-container">
             <canvas id="canvas"></canvas>
             <div class="controls">
                 <input type="text" id="photoName" placeholder="Escribí el pie de la foto">
-                <button id="upload" style="display: none;">⬆️ Enviar Foto</button>
-                <button id="confirmUpload" style="display: none;">⚠️ ¿Estás segurx?</button>
+                <button id="upload" style="display: none;">Enviar Foto</button>
+                <button id="confirmUpload" style="display: none;">¿Estás segurx?</button>
             </div>
         </div>
     </div>
@@ -373,6 +373,20 @@
         let stream;
         let isDarkMode = true;
         let gradientAnimation;
+
+        // Manejo del tooltip en dispositivos táctiles
+        if ('ontouchstart' in window) {
+            elements.infoButton.addEventListener('click', (e) => {
+                e.preventDefault();
+                elements.infoButton.querySelector('.tooltip-text').classList.toggle('active');
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!elements.infoButton.contains(e.target)) {
+                    elements.infoButton.querySelector('.tooltip-text').classList.remove('active');
+                }
+            });
+        }
 
         elements.themeToggle.addEventListener('click', () => {
             isDarkMode = !isDarkMode;
@@ -543,57 +557,57 @@
         };
 
         elements.confirmUpload.onclick = async () => {
-    const photoName = elements.photoName.value.trim();
-    
-    if (photoName && !/^[a-zA-Z0-9-_]+$/.test(photoName)) {
-        elements.message.textContent = 'El nombre solo puede contener letras, números, guiones y guiones bajos';
-        elements.message.style.backgroundColor = 'rgba(255, 0, 0, 0.9)';
-        elements.message.style.display = 'block';
-        return;
-    }
-
-    elements.loading.classList.add('active');
-
-    elements.canvas.toBlob(async blob => {
-        try {
-            const { error } = await supabase.storage
-                .from('fotos')
-                .upload(photoName ? `${photoName}.png` : `selfie-${Date.now()}.png`, blob);
-
-            if (error) throw error;
+            const photoName = elements.photoName.value.trim();
             
-            // Mensaje de éxito
-            elements.message.textContent = '¡Foto enviada con éxito!';
-            elements.message.style.backgroundColor = 'rgba(0, 204, 68, 0.9)';
-            elements.message.style.display = 'block';
-            createAnimation('upload-success');
-            setTimeout(() => elements.message.style.display = 'none', 3000);
+            if (photoName && !/^[a-zA-Z0-9-_]+$/.test(photoName)) {
+                elements.message.textContent = 'El nombre solo puede contener letras, números, guiones y guiones bajos';
+                elements.message.style.backgroundColor = 'rgba(255, 0, 0, 0.9)';
+                elements.message.style.display = 'block';
+                return;
+            }
 
-            // Deshabilitar la toma de más fotos
-            elements.capture.style.display = 'inline';
-            elements.capture.textContent = '🙏 Gracias por participar';
-            elements.capture.style.backgroundColor = '#666';
-            elements.capture.style.cursor = 'default';
-            elements.capture.disabled = true;
-            elements.capture.onclick = null;
+            elements.loading.classList.add('active');
 
-            // Solo ocultar los elementos de control, mantener la foto
-            elements.confirmUpload.style.display = 'none';
-            elements.retake.style.display = 'none';
-            elements.photoName.style.display = 'none';
-            elements.photoName.value = '';
-            elements.upload.style.display = 'none';
+            elements.canvas.toBlob(async blob => {
+                try {
+                    const { error } = await supabase.storage
+                        .from('fotos')
+                        .upload(photoName ? `${photoName}.png` : `selfie-${Date.now()}.png`, blob);
 
-        } catch (error) {
-            console.error('Error al subir la foto:', error);
-            elements.message.textContent = 'Error al subir la foto.';
-            elements.message.style.display = 'block';
-            elements.message.style.backgroundColor = 'rgba(255, 0, 0, 0.9)';
-        } finally {
-            elements.loading.classList.remove('active');
-        }
-    }, 'image/png');
-};
+                    if (error) throw error;
+                    
+                    // Mensaje de éxito
+                    elements.message.textContent = '¡Foto enviada con éxito!';
+                    elements.message.style.backgroundColor = 'rgba(0, 204, 68, 0.9)';
+                    elements.message.style.display = 'block';
+                    createAnimation('upload-success');
+                    setTimeout(() => elements.message.style.display = 'none', 3000);
+
+                    // Deshabilitar la toma de más fotos
+                    elements.capture.style.display = 'inline';
+                    elements.capture.textContent = '🙏 Gracias por participar';
+                    elements.capture.style.backgroundColor = '#666';
+                    elements.capture.style.cursor = 'default';
+                    elements.capture.disabled = true;
+                    elements.capture.onclick = null;
+
+                    // Solo ocultar los elementos de control, mantener la foto
+                    elements.confirmUpload.style.display = 'none';
+                    elements.retake.style.display = 'none';
+                    elements.photoName.style.display = 'none';
+                    elements.photoName.value = '';
+                    elements.upload.style.display = 'none';
+
+                } catch (error) {
+                    console.error('Error al subir la foto:', error);
+                    elements.message.textContent = 'Error al subir la foto.';
+                    elements.message.style.display = 'block';
+                    elements.message.style.backgroundColor = 'rgba(255, 0, 0, 0.9)';
+                } finally {
+                    elements.loading.classList.remove('active');
+                }
+            }, 'image/png');
+        };
 
         window.addEventListener('beforeunload', () => {
             if (gradientAnimation) {
@@ -604,15 +618,13 @@
         
         initCamera();
 
-         // Iniciar en modo oscuro
-         document.body.style.background = 'rgb(18, 18, 18)';
+        // Iniciar en modo oscuro
+        document.body.style.background = 'rgb(18, 18, 18)';
         elements.title.style.color = '#ffffff';
         elements.themeToggle.style.color = '#ffffff';
         elements.randomButton.style.color = '#ffffff';
         elements.infoButton.style.color = '#ffffff';
         elements.instagramButton.style.color = '#ffffff';
-
-        
     </script>
 </body>
 </html>
