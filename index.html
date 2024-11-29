@@ -579,13 +579,12 @@
 
     if (isMobile()) {
         // Versión móvil
-        elements.video.style.display = 'none';
-        elements.canvas.style.display = 'block';  // Aseguramos que el canvas sea visible
+        elements.canvas.style.position = 'absolute';  // Agregamos esto
+        elements.canvas.style.top = '0';             // Agregamos esto
+        elements.canvas.style.left = '0';            // Agregamos esto
+        elements.video.style.visibility = 'hidden';   // Cambiamos display por visibility
         elements.capture.style.display = 'none';
-        elements.mobileControls.style.display = 'flex';  // Mostramos los controles móviles
-        elements.photoNameMobile.style.display = 'block';  // Mostramos el input
-        elements.uploadMobile.style.display = 'block';     // Mostramos el botón de subir
-        elements.retakeMobile.style.display = 'block';     // Mostramos el botón de repetir
+        elements.mobileControls.style.display = 'flex';
     } else {
         // Versión desktop (sin cambios)
         elements.capture.style.display = 'none';
