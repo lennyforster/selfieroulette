@@ -513,46 +513,72 @@
         }
 
         function createAnimation(className) {
-            const animation = document.createElement('div');
-            animation.className = className;
-            document.body.appendChild(animation);
-            setTimeout(() => animation.remove(), className === 'camera-flash' ? 300 : 1500);
-            return animation;
-        }
+    const animation = document.createElement('div');
+    animation.className = className;
+    document.body.appendChild(animation);
+    setTimeout(() => animation.remove(), className === 'camera-flash' ? 300 : 1500);
+    return animation;
+}
 
-        elements.randomButton.onclick = () => {
-            animateGradient();
-            elements.title.style.color = '#ffffff';
-            elements.themeToggle.style.color = '#ffffff';
-            elements.randomButton.style.color = '#ffffff';
-            elements.infoButton.style.color = '#ffffff';
-            elements.instagramButton.style.color = '#ffffff';
-        };
+function isMobile() {
+    return window.innerWidth <= 768;
+}
 
-        elements.capture.onclick = () => {
-            createAnimation('camera-flash');
-            const context = elements.canvas.getContext('2d');
-            elements.canvas.width = elements.video.videoWidth;
-            elements.canvas.height = elements.video.videoHeight;
-            context.save();
-            context.scale(-1, 1);
-            context.drawImage(elements.video, -elements.canvas.width, 0, elements.canvas.width, elements.canvas.height);
-            context.restore();
-            elements.capture.style.display = 'none';
-            elements.retake.style.display = 'inline';
-            elements.upload.style.display = 'inline';
-            elements.photoName.style.display = 'block';
-        };
+elements.randomButton.onclick = () => {
+    animateGradient();
+    elements.title.style.color = '#ffffff';
+    elements.themeToggle.style.color = '#ffffff';
+    elements.randomButton.style.color = '#ffffff';
+    elements.infoButton.style.color = '#ffffff';
+    elements.instagramButton.style.color = '#ffffff';
+};
 
-        elements.retake.onclick = () => {
-            elements.retake.style.display = 'none';
-            elements.capture.style.display = 'inline';
-            elements.upload.style.display = 'none';
-            elements.confirmUpload.style.display = 'none';
-            elements.photoName.style.display = 'none';
-            elements.photoName.value = '';
-            elements.canvas.getContext('2d').clearRect(0, 0, elements.canvas.width, elements.canvas.height);
-        };
+elements.capture.onclick = () => {
+    createAnimation('camera-flash');
+    const context = elements.canvas.getContext('2d');
+    elements.canvas.width = elements.video.videoWidth;
+    elements.canvas.height = elements.video.videoHeight;
+    context.save();
+    context.scale(-1, 1);
+    context.drawImage(elements.video, -elements.canvas.width, 0, elements.canvas.width, elements.canvas.height);
+    context.restore();
+
+    if (isMobile()) {
+        // Versión móvil
+        elements.video.style.display = 'none';
+        elements.canvas.style.display = 'block';
+        elements.capture.style.display = 'none';
+        elements.photoName.style.display = 'block';
+        elements.upload.style.display = 'inline';
+    } else {
+        // Versión desktop (mantener comportamiento original)
+        elements.capture.style.display = 'none';
+        elements.retake.style.display = 'inline';
+        elements.upload.style.display = 'inline';
+        elements.photoName.style.display = 'block';
+    }
+};
+
+elements.retake.onclick = () => {
+    if (isMobile()) {
+        elements.video.style.display = 'block';
+        elements.canvas.style.display = 'none';
+        elements.capture.style.display = 'inline';
+        elements.photoName.style.display = 'none';
+        elements.upload.style.display = 'none';
+        elements.confirmUpload.style.display = 'none';
+        elements.photoName.value = '';
+    } else {
+        // Versión desktop (mantener comportamiento original)
+        elements.retake.style.display = 'none';
+        elements.capture.style.display = 'inline';
+        elements.upload.style.display = 'none';
+        elements.confirmUpload.style.display = 'none';
+        elements.photoName.style.display = 'none';
+        elements.photoName.value = '';
+    }
+    elements.canvas.getContext('2d').clearRect(0, 0, elements.canvas.width, elements.canvas.height);
+};
 
         elements.upload.onclick = () => {
             elements.upload.style.display = 'none';
