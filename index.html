@@ -284,11 +284,20 @@
         top: 0;
         left: 0;
         width: 100%;
-        background: rgba(18, 18, 18, 0.9);
+        background: inherit;
         padding: 10px;
         margin: 0;
         text-align: center;
         z-index: 1000;
+        transition: background 0.3s ease;
+    }
+
+    .nav-buttons {
+        display: flex;
+        justify-content: space-around;
+        gap: 15px;
+        padding: 0 10px;
+        font-size: 14px;
     }
 
     .container {
@@ -310,6 +319,30 @@
         aspect-ratio: 1/1;
         object-fit: cover;
         max-height: 90vw;
+    }
+
+    .tooltip .tooltip-text {
+        width: 80vw;
+        left: 50%;
+        transform: translateX(-50%);
+        top: 100%;
+    }
+
+    .mobile-controls {
+        display: none;
+        flex-direction: column;
+        gap: 10px;
+        width: 100%;
+        margin-top: 10px;
+    }
+
+    .mobile-controls.visible {
+        display: flex;
+    }
+
+    /* Ocultar controles de desktop en móvil */
+    .controls #retake {
+        display: none !important;
     }
 }
     </style>
@@ -337,6 +370,12 @@
                 <button id="capture">📸 Sacar Foto</button>
                 <button id="retake" style="display: none;">🔄 Repetir Foto</button>
             </div>
+            <!-- Nuevos controles solo para móvil -->
+            <div class="mobile-controls" style="display: none;">
+                <input type="text" id="photoName-mobile" placeholder="Escribí el pie de la foto">
+                <button id="upload-mobile">⬆️ Enviar Foto</button>
+                <button id="retake-mobile">🔄 Repetir Foto</button>
+            </div>
         </div>
         <div class="result-container">
             <canvas id="canvas"></canvas>
@@ -360,21 +399,26 @@
         );
 
         const elements = {
-            video: document.getElementById('video'),
-            canvas: document.getElementById('canvas'),
-            capture: document.getElementById('capture'),
-            retake: document.getElementById('retake'),
-            upload: document.getElementById('upload'),
-            confirmUpload: document.getElementById('confirmUpload'),
-            message: document.getElementById('message'),
-            photoName: document.getElementById('photoName'),
-            loading: document.querySelector('.loading'),
-            title: document.querySelector('h1'),
-            themeToggle: document.getElementById('themeToggle'),
-            randomButton: document.getElementById('randomButton'),
-            infoButton: document.getElementById('infoButton'),
-            instagramButton: document.querySelector('.nav-button[href]')
-        };
+    video: document.getElementById('video'),
+    canvas: document.getElementById('canvas'),
+    capture: document.getElementById('capture'),
+    retake: document.getElementById('retake'),
+    upload: document.getElementById('upload'),
+    confirmUpload: document.getElementById('confirmUpload'),
+    message: document.getElementById('message'),
+    photoName: document.getElementById('photoName'),
+    loading: document.querySelector('.loading'),
+    title: document.querySelector('h1'),
+    themeToggle: document.getElementById('themeToggle'),
+    randomButton: document.getElementById('randomButton'),
+    infoButton: document.getElementById('infoButton'),
+    instagramButton: document.querySelector('.nav-button[href]'),
+    // Nuevos elementos móviles
+    mobileControls: document.querySelector('.mobile-controls'),
+    photoNameMobile: document.getElementById('photoName-mobile'),
+    uploadMobile: document.getElementById('upload-mobile'),
+    retakeMobile: document.getElementById('retake-mobile')
+};
 
         let stream;
         let isDarkMode = true;
@@ -518,6 +562,10 @@
             elements.instagramButton.style.color = '#ffffff';
         };
 
+        function isMobile() {
+            return window.innerWidth <= 768;
+        }
+
         elements.capture.onclick = () => {
             createAnimation('camera-flash');
             const context = elements.canvas.getContext('2d');
@@ -527,10 +575,76 @@
             context.scale(-1, 1);
             context.drawImage(elements.video, -elements.canvas.width, 0, elements.canvas.width, elements.canvas.height);
             context.restore();
-            elements.capture.style.display = 'none';
-            elements.retake.style.display = 'inline';
-            elements.upload.style.display = 'inline';
-            elements.photoName.style.display = 'block';
+
+            if (isMobile()) {
+                // Versión móvil
+                elements.video.style.display = 'none';
+                elements.canvas.style.display = 'block';
+                elements.capture.style.display = 'none';
+                elements.mobileControls.classList.add('visible');
+            } else {
+                // Versión desktop (mantener comportamiento original)
+                elements.capture.style.display = 'none';
+                elements.retake.style.display = 'inline';
+                elements.upload.style.display = 'inline';
+                elements.photoName.style.display = 'block';
+            }
+        };
+
+        // Agregar estos nuevos event handlers después del capture.onclick
+        elements.retakeMobile.onclick = () => {
+            elements.video.style.display = 'block';
+            elements.canvas.style.display = 'none';
+            elements.capture.style.display = 'inline';
+            elements.mobileControls.classList.remove('visible');
+            elements.photoNameMobile.value = '';
+        };
+
+        elements.uploadMobile.onclick = async () => {
+            const photoName = elements.photoNameMobile.value.trim();
+            
+            if (photoName && !/^[a-zA-Z0-9-_]+$/.test(photoName)) {
+                elements.message.textContent = 'El nombre solo puede contener letras, números, guiones y guiones bajos';
+                elements.message.style.backgroundColor = 'rgba(255, 0, 0, 0.9)';
+                elements.message.style.display = 'block';
+                return;
+            }
+
+            elements.loading.classList.add('active');
+
+            elements.canvas.toBlob(async blob => {
+                try {
+                    const { error } = await supabase.storage
+                        .from('fotos')
+                        .upload(photoName ? `${photoName}.png` : `selfie-${Date.now()}.png`, blob);
+
+                    if (error) throw error;
+                    
+                    // Mensaje de éxito
+                    elements.message.textContent = '¡Foto enviada con éxito!';
+                    elements.message.style.backgroundColor = 'rgba(0, 204, 68, 0.9)';
+                    elements.message.style.display = 'block';
+                    createAnimation('upload-success');
+                    setTimeout(() => elements.message.style.display = 'none', 3000);
+
+                    // Deshabilitar la toma de más fotos
+                    elements.capture.style.display = 'inline';
+                    elements.capture.textContent = '🙏 Gracias por participar';
+                    elements.capture.style.backgroundColor = '#666';
+                    elements.capture.style.cursor = 'default';
+                    elements.capture.disabled = true;
+                    elements.capture.onclick = null;
+                    elements.mobileControls.classList.remove('visible');
+
+                } catch (error) {
+                    console.error('Error al subir la foto:', error);
+                    elements.message.textContent = 'Error al subir la foto.';
+                    elements.message.style.display = 'block';
+                    elements.message.style.backgroundColor = 'rgba(255, 0, 0, 0.9)';
+                } finally {
+                    elements.loading.classList.remove('active');
+                }
+            }, 'image/png');
         };
 
         elements.retake.onclick = () => {
