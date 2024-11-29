@@ -322,6 +322,21 @@
         left: 10%;
         transform: none;
     }
+
+    .mobile-controls {
+        display: none;
+        margin-top: 10px;
+        gap: 10px;
+    }
+
+    .mobile-controls.visible {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .mobile-controls button {
+        margin: 5px 0;
+    }
 }
     </style>
 </head>
@@ -344,9 +359,16 @@
     <div class="container">
         <div class="camera-container">
             <video id="video" autoplay playsinline></video>
+            <canvas id="canvas" style="display: none;"></canvas>
             <div class="controls">
                 <button id="capture">📸 Sacar Foto</button>
                 <button id="retake" style="display: none;">🔄 Repetir Foto</button>
+            </div>
+            <div class="mobile-controls">
+                <button id="retakePhoto">🔄 Repetir Foto</button>
+                <input type="text" id="photoName" placeholder="Escribí el pie de la foto" style="display: none;">
+                <button id="upload" style="display: none;">⬆️ Enviar Foto</button>
+                <button id="confirmUpload" style="display: none;">⚠️ ¿Estás segurx?</button>
             </div>
         </div>
         <div class="result-container">
@@ -371,21 +393,23 @@
         );
 
         const elements = {
-            video: document.getElementById('video'),
-            canvas: document.getElementById('canvas'),
-            capture: document.getElementById('capture'),
-            retake: document.getElementById('retake'),
-            upload: document.getElementById('upload'),
-            confirmUpload: document.getElementById('confirmUpload'),
-            message: document.getElementById('message'),
-            photoName: document.getElementById('photoName'),
-            loading: document.querySelector('.loading'),
-            title: document.querySelector('h1'),
-            themeToggle: document.getElementById('themeToggle'),
-            randomButton: document.getElementById('randomButton'),
-            infoButton: document.getElementById('infoButton'),
-            instagramButton: document.querySelector('.nav-button[href]')
-        };
+    video: document.getElementById('video'),
+    canvas: document.getElementById('canvas'),
+    capture: document.getElementById('capture'),
+    retake: document.getElementById('retake'),
+    retakePhoto: document.getElementById('retakePhoto'),
+    upload: document.getElementById('upload'),
+    confirmUpload: document.getElementById('confirmUpload'),
+    message: document.getElementById('message'),
+    photoName: document.getElementById('photoName'),
+    loading: document.querySelector('.loading'),
+    title: document.querySelector('h1'),
+    themeToggle: document.getElementById('themeToggle'),
+    randomButton: document.getElementById('randomButton'),
+    infoButton: document.getElementById('infoButton'),
+    instagramButton: document.querySelector('.nav-button[href]'),
+    mobileControls: document.querySelector('.mobile-controls')
+};
 
         let stream;
         let isDarkMode = true;
@@ -548,8 +572,7 @@ elements.capture.onclick = () => {
         elements.video.style.display = 'none';
         elements.canvas.style.display = 'block';
         elements.capture.style.display = 'none';
-        elements.photoName.style.display = 'block';
-        elements.upload.style.display = 'inline';
+        elements.mobileControls.classList.add('visible');
     } else {
         // Versión desktop (mantener comportamiento original)
         elements.capture.style.display = 'none';
@@ -559,15 +582,24 @@ elements.capture.onclick = () => {
     }
 };
 
+elements.retakePhoto.onclick = () => {
+    elements.video.style.display = 'block';
+    elements.canvas.style.display = 'none';
+    elements.capture.style.display = 'inline';
+    elements.mobileControls.classList.remove('visible');
+    elements.photoName.style.display = 'none';
+    elements.upload.style.display = 'none';
+    elements.confirmUpload.style.display = 'none';
+    elements.photoName.value = '';
+    elements.canvas.getContext('2d').clearRect(0, 0, elements.canvas.width, elements.canvas.height);
+};
+
 elements.retake.onclick = () => {
     if (isMobile()) {
         elements.video.style.display = 'block';
         elements.canvas.style.display = 'none';
         elements.capture.style.display = 'inline';
-        elements.photoName.style.display = 'none';
-        elements.upload.style.display = 'none';
-        elements.confirmUpload.style.display = 'none';
-        elements.photoName.value = '';
+        elements.mobileControls.classList.remove('visible');
     } else {
         // Versión desktop (mantener comportamiento original)
         elements.retake.style.display = 'none';
