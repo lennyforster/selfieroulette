@@ -73,6 +73,11 @@
             display: inline-block;
         }
 
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+
         .tooltip .tooltip-text {
             visibility: hidden;
             width: 300px;
@@ -112,6 +117,7 @@
             margin-top: -60px;
             width: 90vw;
             max-width: 1000px;
+            max-width: 1200px;  /* Agregar esta línea */
         }
 
         .camera-container, .result-container {
@@ -273,39 +279,50 @@
         }
 
         @media (max-width: 768px) {
-            body {
-                padding-top: 40px;
-                overflow-y: auto;
-                -webkit-overflow-scrolling: touch;
-            }
-            .container {
-                flex-direction: column;
-                align-items: center;
-                margin-top: 0;
-            }
-            .camera-container, .result-container {
-                width: 90vw;
-            }
-            .header {
-                position: static;
-                margin: 20px 0;
-                text-align: center;
-            }
-            .nav-buttons {
-                justify-content: center;
-                gap: 20px;
-            }
-            .tooltip .tooltip-text {
-                width: 80%;
-                left: 10%;
-                transform: none;
-            }
-            video, canvas {
-                aspect-ratio: 1/1;
-                object-fit: cover;
-                max-height: 90vw;
-            }
-        }
+    .header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        background: rgba(18, 18, 18, 0.9);
+        padding: 10px;
+        margin: 0;
+        text-align: center;
+        z-index: 1000;
+    }
+
+    .container {
+        margin-top: 120px;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .camera-container {
+        width: 90vw;
+        max-width: 90vw;
+    }
+
+    .result-container {
+        display: none;
+    }
+
+    video, canvas {
+        aspect-ratio: 1/1;
+        object-fit: cover;
+        max-height: 90vw;
+    }
+
+    .nav-buttons {
+        justify-content: center;
+        gap: 20px;
+    }
+
+    .tooltip .tooltip-text {
+        width: 80%;
+        left: 10%;
+        transform: none;
+    }
+}
     </style>
 </head>
 <body>
@@ -328,16 +345,16 @@
         <div class="camera-container">
             <video id="video" autoplay playsinline></video>
             <div class="controls">
-                <button id="capture">Sacar Foto</button>
-                <button id="retake" style="display: none;">Repetir Foto</button>
+                <button id="capture">📸 Sacar Foto</button>
+                <button id="retake" style="display: none;">🔄 Repetir Foto</button>
             </div>
         </div>
         <div class="result-container">
             <canvas id="canvas"></canvas>
             <div class="controls">
                 <input type="text" id="photoName" placeholder="Escribí el pie de la foto">
-                <button id="upload" style="display: none;">Enviar Foto</button>
-                <button id="confirmUpload" style="display: none;">¿Estás segurx?</button>
+                <button id="upload" style="display: none;">⬆️ Enviar Foto</button>
+                <button id="confirmUpload" style="display: none;">⚠️ ¿Estás segurx?</button>
             </div>
         </div>
     </div>
@@ -373,20 +390,6 @@
         let stream;
         let isDarkMode = true;
         let gradientAnimation;
-
-        // Manejo del tooltip en dispositivos táctiles
-        if ('ontouchstart' in window) {
-            elements.infoButton.addEventListener('click', (e) => {
-                e.preventDefault();
-                elements.infoButton.querySelector('.tooltip-text').classList.toggle('active');
-            });
-
-            document.addEventListener('click', (e) => {
-                if (!elements.infoButton.contains(e.target)) {
-                    elements.infoButton.querySelector('.tooltip-text').classList.remove('active');
-                }
-            });
-        }
 
         elements.themeToggle.addEventListener('click', () => {
             isDarkMode = !isDarkMode;
