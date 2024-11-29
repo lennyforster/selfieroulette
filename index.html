@@ -312,7 +312,7 @@
     }
 
     .result-container {
-        display: none;
+        display: none !important;
     }
 
     video, canvas {
@@ -579,9 +579,12 @@
     if (isMobile()) {
         // Versión móvil
         elements.video.style.display = 'none';
-        elements.canvas.style.display = 'block';  // Aseguramos que el canvas sea visible
+        elements.canvas.style.display = 'block';
         elements.capture.style.display = 'none';
-        elements.mobileControls.style.display = 'flex';  // Cambiamos a flex directamente
+        elements.mobileControls.style.display = 'flex';
+        elements.photoNameMobile.style.display = 'block';  // Aseguramos que el input sea visible
+        elements.uploadMobile.style.display = 'block';     // Mostramos el botón de subir
+        elements.retakeMobile.style.display = 'block';     // Mostramos el botón de repetir
     } else {
         // Versión desktop (mantener comportamiento original)
         elements.capture.style.display = 'none';
