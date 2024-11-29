@@ -284,12 +284,11 @@
         top: 0;
         left: 0;
         width: 100%;
-        background: inherit;
+        background: rgba(18, 18, 18, 0.9);
         padding: 10px;
         margin: 0;
         text-align: center;
         z-index: 1000;
-        transition: background 0.3s ease;
     }
 
     .container {
@@ -311,32 +310,6 @@
         aspect-ratio: 1/1;
         object-fit: cover;
         max-height: 90vw;
-    }
-
-    .nav-buttons {
-        justify-content: center;
-        gap: 20px;
-    }
-
-    .tooltip .tooltip-text {
-        width: 80%;
-        left: 10%;
-        transform: none;
-    }
-
-    .mobile-controls {
-        display: none;
-        margin-top: 10px;
-        gap: 10px;
-    }
-
-    .mobile-controls.visible {
-        display: flex;
-        flex-direction: column;
-    }
-
-    .mobile-controls button {
-        margin: 5px 0;
     }
 }
     </style>
@@ -360,16 +333,9 @@
     <div class="container">
         <div class="camera-container">
             <video id="video" autoplay playsinline></video>
-            <canvas id="canvas" style="display: none;"></canvas>
             <div class="controls">
                 <button id="capture">📸 Sacar Foto</button>
                 <button id="retake" style="display: none;">🔄 Repetir Foto</button>
-            </div>
-            <div class="mobile-controls">
-                <input type="text" id="photoName" placeholder="Escribí el pie de la foto">
-                <button id="upload">⬆️ Enviar Foto</button>
-                <button id="confirmUpload" style="display: none;">⚠️ ¿Estás segurx?</button>
-                <button id="retakePhoto">🔄 Repetir Foto</button>
             </div>
         </div>
         <div class="result-container">
@@ -394,23 +360,21 @@
         );
 
         const elements = {
-    video: document.getElementById('video'),
-    canvas: document.getElementById('canvas'),
-    capture: document.getElementById('capture'),
-    retake: document.getElementById('retake'),
-    retakePhoto: document.getElementById('retakePhoto'),
-    upload: document.getElementById('upload'),
-    confirmUpload: document.getElementById('confirmUpload'),
-    message: document.getElementById('message'),
-    photoName: document.getElementById('photoName'),
-    loading: document.querySelector('.loading'),
-    title: document.querySelector('h1'),
-    themeToggle: document.getElementById('themeToggle'),
-    randomButton: document.getElementById('randomButton'),
-    infoButton: document.getElementById('infoButton'),
-    instagramButton: document.querySelector('.nav-button[href]'),
-    mobileControls: document.querySelector('.mobile-controls')
-};
+            video: document.getElementById('video'),
+            canvas: document.getElementById('canvas'),
+            capture: document.getElementById('capture'),
+            retake: document.getElementById('retake'),
+            upload: document.getElementById('upload'),
+            confirmUpload: document.getElementById('confirmUpload'),
+            message: document.getElementById('message'),
+            photoName: document.getElementById('photoName'),
+            loading: document.querySelector('.loading'),
+            title: document.querySelector('h1'),
+            themeToggle: document.getElementById('themeToggle'),
+            randomButton: document.getElementById('randomButton'),
+            infoButton: document.getElementById('infoButton'),
+            instagramButton: document.querySelector('.nav-button[href]')
+        };
 
         let stream;
         let isDarkMode = true;
@@ -538,82 +502,46 @@
         }
 
         function createAnimation(className) {
-    const animation = document.createElement('div');
-    animation.className = className;
-    document.body.appendChild(animation);
-    setTimeout(() => animation.remove(), className === 'camera-flash' ? 300 : 1500);
-    return animation;
-}
+            const animation = document.createElement('div');
+            animation.className = className;
+            document.body.appendChild(animation);
+            setTimeout(() => animation.remove(), className === 'camera-flash' ? 300 : 1500);
+            return animation;
+        }
 
-function isMobile() {
-    return window.innerWidth <= 768;
-}
+        elements.randomButton.onclick = () => {
+            animateGradient();
+            elements.title.style.color = '#ffffff';
+            elements.themeToggle.style.color = '#ffffff';
+            elements.randomButton.style.color = '#ffffff';
+            elements.infoButton.style.color = '#ffffff';
+            elements.instagramButton.style.color = '#ffffff';
+        };
 
-elements.randomButton.onclick = () => {
-    animateGradient();
-    elements.title.style.color = '#ffffff';
-    elements.themeToggle.style.color = '#ffffff';
-    elements.randomButton.style.color = '#ffffff';
-    elements.infoButton.style.color = '#ffffff';
-    elements.instagramButton.style.color = '#ffffff';
-};
+        elements.capture.onclick = () => {
+            createAnimation('camera-flash');
+            const context = elements.canvas.getContext('2d');
+            elements.canvas.width = elements.video.videoWidth;
+            elements.canvas.height = elements.video.videoHeight;
+            context.save();
+            context.scale(-1, 1);
+            context.drawImage(elements.video, -elements.canvas.width, 0, elements.canvas.width, elements.canvas.height);
+            context.restore();
+            elements.capture.style.display = 'none';
+            elements.retake.style.display = 'inline';
+            elements.upload.style.display = 'inline';
+            elements.photoName.style.display = 'block';
+        };
 
-elements.capture.onclick = () => {
-    createAnimation('camera-flash');
-    const context = elements.canvas.getContext('2d');
-    elements.canvas.width = elements.video.videoWidth;
-    elements.canvas.height = elements.video.videoHeight;
-    context.save();
-    context.scale(-1, 1);
-    context.drawImage(elements.video, -elements.canvas.width, 0, elements.canvas.width, elements.canvas.height);
-    context.restore();
-
-    if (isMobile()) {
-        // Versión móvil
-        elements.video.style.display = 'none';
-        elements.canvas.style.display = 'block';
-        elements.capture.style.display = 'none';
-        elements.mobileControls.classList.add('visible');
-        elements.photoName.style.display = 'block';
-        elements.upload.style.display = 'block';
-    } else {
-        // Versión desktop (mantener comportamiento original)
-        elements.capture.style.display = 'none';
-        elements.retake.style.display = 'inline';
-        elements.upload.style.display = 'inline';
-        elements.photoName.style.display = 'block';
-    }
-};
-
-elements.retakePhoto.onclick = () => {
-    elements.video.style.display = 'block';
-    elements.canvas.style.display = 'none';
-    elements.capture.style.display = 'inline';
-    elements.mobileControls.classList.remove('visible');
-    elements.photoName.style.display = 'none';
-    elements.upload.style.display = 'none';
-    elements.confirmUpload.style.display = 'none';
-    elements.photoName.value = '';
-    elements.canvas.getContext('2d').clearRect(0, 0, elements.canvas.width, elements.canvas.height);
-};
-
-elements.retake.onclick = () => {
-    if (isMobile()) {
-        elements.video.style.display = 'block';
-        elements.canvas.style.display = 'none';
-        elements.capture.style.display = 'inline';
-        elements.mobileControls.classList.remove('visible');
-    } else {
-        // Versión desktop (mantener comportamiento original)
-        elements.retake.style.display = 'none';
-        elements.capture.style.display = 'inline';
-        elements.upload.style.display = 'none';
-        elements.confirmUpload.style.display = 'none';
-        elements.photoName.style.display = 'none';
-        elements.photoName.value = '';
-    }
-    elements.canvas.getContext('2d').clearRect(0, 0, elements.canvas.width, elements.canvas.height);
-};
+        elements.retake.onclick = () => {
+            elements.retake.style.display = 'none';
+            elements.capture.style.display = 'inline';
+            elements.upload.style.display = 'none';
+            elements.confirmUpload.style.display = 'none';
+            elements.photoName.style.display = 'none';
+            elements.photoName.value = '';
+            elements.canvas.getContext('2d').clearRect(0, 0, elements.canvas.width, elements.canvas.height);
+        };
 
         elements.upload.onclick = () => {
             elements.upload.style.display = 'none';
