@@ -307,6 +307,7 @@
     }
 
     .camera-container {
+        position: relative;
         width: 90vw;
         max-width: 90vw;
     }
@@ -319,7 +320,10 @@
         aspect-ratio: 1/1;
         object-fit: cover;
         max-height: 90vw;
-        display: block !important;
+        width: 100%;
+        position: absolute;  /* Agregamos esto */
+        top: 0;             /* Agregamos esto */
+        left: 0; 
     }
 
     .tooltip .tooltip-text {
@@ -579,10 +583,8 @@
 
     if (isMobile()) {
         // Versión móvil
-        elements.canvas.style.position = 'absolute';  // Agregamos esto
-        elements.canvas.style.top = '0';             // Agregamos esto
-        elements.canvas.style.left = '0';            // Agregamos esto
-        elements.video.style.visibility = 'hidden';   // Cambiamos display por visibility
+        elements.video.style.opacity = '0';          // Cambiamos a opacity
+        elements.canvas.style.opacity = '1';         // Aseguramos que el canvas sea visible
         elements.capture.style.display = 'none';
         elements.mobileControls.style.display = 'flex';
     } else {
