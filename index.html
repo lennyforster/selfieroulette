@@ -284,11 +284,12 @@
         top: 0;
         left: 0;
         width: 100%;
-        background: rgba(18, 18, 18, 0.9);
+        background: inherit;
         padding: 10px;
         margin: 0;
         text-align: center;
         z-index: 1000;
+        transition: background 0.3s ease;
     }
 
     .container {
@@ -365,10 +366,10 @@
                 <button id="retake" style="display: none;">🔄 Repetir Foto</button>
             </div>
             <div class="mobile-controls">
-                <button id="retakePhoto">🔄 Repetir Foto</button>
-                <input type="text" id="photoName" placeholder="Escribí el pie de la foto" style="display: none;">
-                <button id="upload" style="display: none;">⬆️ Enviar Foto</button>
+                <input type="text" id="photoName" placeholder="Escribí el pie de la foto">
+                <button id="upload">⬆️ Enviar Foto</button>
                 <button id="confirmUpload" style="display: none;">⚠️ ¿Estás segurx?</button>
+                <button id="retakePhoto">🔄 Repetir Foto</button>
             </div>
         </div>
         <div class="result-container">
@@ -573,6 +574,8 @@ elements.capture.onclick = () => {
         elements.canvas.style.display = 'block';
         elements.capture.style.display = 'none';
         elements.mobileControls.classList.add('visible');
+        elements.photoName.style.display = 'block';
+        elements.upload.style.display = 'block';
     } else {
         // Versión desktop (mantener comportamiento original)
         elements.capture.style.display = 'none';
