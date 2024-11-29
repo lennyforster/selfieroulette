@@ -567,30 +567,32 @@
         }
 
         elements.capture.onclick = () => {
-            createAnimation('camera-flash');
-            const context = elements.canvas.getContext('2d');
-            elements.canvas.width = elements.video.videoWidth;
-            elements.canvas.height = elements.video.videoHeight;
-            context.save();
-            context.scale(-1, 1);
-            context.drawImage(elements.video, -elements.canvas.width, 0, elements.canvas.width, elements.canvas.height);
-            context.restore();
+    createAnimation('camera-flash');
+    const context = elements.canvas.getContext('2d');
+    elements.canvas.width = elements.video.videoWidth;
+    elements.canvas.height = elements.video.videoHeight;
+    context.save();
+    context.scale(-1, 1);
+    context.drawImage(elements.video, -elements.canvas.width, 0, elements.canvas.width, elements.canvas.height);
+    context.restore();
 
-            if (isMobile()) {
-                // Versión móvil
-                elements.video.style.display = 'none';
-                elements.canvas.style.display = 'block';
-                elements.capture.style.display = 'none';
-                elements.mobileControls.classList.add('visible');
-            } else {
-                // Versión desktop (mantener comportamiento original)
-                elements.capture.style.display = 'none';
-                elements.retake.style.display = 'inline';
-                elements.upload.style.display = 'inline';
-                elements.photoName.style.display = 'block';
-            }
-        };
-
+    if (isMobile()) {
+        // Versión móvil
+        elements.video.style.display = 'none';
+        elements.canvas.style.display = 'block';  // Aseguramos que el canvas sea visible
+        elements.capture.style.display = 'none';
+        elements.mobileControls.style.display = 'flex';  // Mostramos los controles móviles
+        elements.photoNameMobile.style.display = 'block';  // Mostramos el input
+        elements.uploadMobile.style.display = 'block';     // Mostramos el botón de subir
+        elements.retakeMobile.style.display = 'block';     // Mostramos el botón de repetir
+    } else {
+        // Versión desktop (sin cambios)
+        elements.capture.style.display = 'none';
+        elements.retake.style.display = 'inline';
+        elements.upload.style.display = 'inline';
+        elements.photoName.style.display = 'block';
+    }
+};
         // Agregar estos nuevos event handlers después del capture.onclick
         elements.retakeMobile.onclick = () => {
             elements.video.style.display = 'block';
