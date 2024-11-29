@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Selfie Roulette 2.0</title>
+    <style>
+        :root {
+            --button-gap: 10px;
+        }
+
+        body {
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+            font-weight: bold;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            overflow-x: hidden;
+            background-color: white;
+            transition: background-color 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding-top: 20px;
+            padding-bottom: 20px;
+            user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+        }
+
+        .header {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            text-align: left;
+            z-index: 1000;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 48px;
+            letter-spacing: -1.5px;
+            font-weight: bold;
+            transition: color 0.3s ease;
+            color: black;
+        }
+
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+            width: 100%;
+            position: relative;
+        }
+
+        .nav-button {
+            color: #666;
+            cursor: pointer;
+            transition: color 0.3s ease;
+            font-size: 16px;
+            text-decoration: none;
+        }
+
+        .nav-button:hover {
+            opacity: 0.8;
+        }
+
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .tooltip .tooltip-text {
+            visibility: hidden;
+            width: 300px;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            text-align: left;
+            padding: 10px;
+            border-radius: 5px;
+            position: absolute;
+            z-index: 9999;
+            top: 130%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-weight: normal;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .tooltip .tooltip-text::after {
+            content: "";
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: transparent transparent rgba(0, 0, 0, 0.8) transparent;
+        }
+
+        .container {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            position: relative;
+            margin-top: -60px;
+            width: 90vw;
+            max-width: 1000px;
+            max-width: 1200px;  /* Agregar esta línea */
+        }
+
+        .camera-container, .result-container {
+            display: flex;
+            flex-direction: column;
+            width: 480px;
+            max-width: 40vw;
+            gap: var(--button-gap);
+            position: relative;
+        }
+
+        video, canvas {
+            border: 1px solid #000;
+            width: 100%;
+            aspect-ratio: 16/9;
+            max-height: 70vh;
+            object-fit: contain;
+            background-color: white;
+            display: block;
+        }
+
+        video {
+            transform: scaleX(-1);
+        }
+
+        .controls {
+            width: 100%;
+        }
+
+        button {
+            height: 44px;
+            padding: 0 24px;
+            font-size: 16px;
+            border: none;
+            cursor: pointer;
+            background-color: #0066ff;
+            color: white;
+            font-family: inherit;
+            font-weight: bold;
+            transition: opacity 0.3s;
+            width: 100%;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        #upload, #confirmUpload {
+            background-color: #00cc44;
+        }
+
+        #confirmUpload {
+            background-color: #ff3300;
+        }
+
+        #retake {
+            background-color: #666;
+        }
+
+        input[type="text"] {
+            height: 44px;
+            padding: 0 10px;
+            font-size: 16px;
+            border: 1px solid #000;
+            width: 100%;
+            font-family: inherit;
+            font-weight: bold;
+            box-sizing: border-box;
+            display: none;
+            margin-bottom: var(--button-gap);
+        }
+
+        #message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px;
+            background-color: rgba(0, 204, 68, 0.9);
+            color: white;
+            display: none;
+            z-index: 9999;
+        }
+
+        .loading {
+            display: none;
+            color: #666;
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 9999;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .camera-flash {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: white;
+            opacity: 0;
+            pointer-events: none;
+            animation: cameraFlash 0.3s ease-out;
+            z-index: 9998;
+        }
+
+        @keyframes cameraFlash {
+            0% { opacity: 0; }
+            5% { opacity: 0.3; }
+            100% { opacity: 0; }
+        }
+
+        .upload-success {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 204, 68, 0.2);
+            pointer-events: none;
+            animation: fadeInOut 1.5s ease-out forwards;
+            z-index: 9998;
+        }
+
+        @keyframes fadeInOut {
+            0% { opacity: 0; }
+            20% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+        @keyframes gradientAnimation {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        @media (min-width: 2560px) {
+    body {
+        padding-top: 120px;
+    }
+    
+    .container {
+        max-width: 1600px;
+    }
+    
+    .camera-container, .result-container {
+        width: 640px;
+    }
+}
+
+
+        @media (max-width: 1024px) {
+            .camera-container, .result-container {
+                width: 45vw;
+            }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding-top: 40px;
+            }
+            .container {
+                flex-direction: column;
+                align-items: center;
+                margin-top: 0;
+            }
+            .camera-container, .result-container {
+                width: 90vw;
+            }
+            .header {
+                position: static;
+                margin: 20px 0;
+                text-align: center;
+            }
+            .nav-buttons {
+                justify-content: center;
+                gap: 20px;
+            }
+            .tooltip .tooltip-text {
+                width: 80%;
+                left: 10%;
+                transform: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Selfie Roulette</h1>
+        <div class="nav-buttons">
+            <span class="nav-button" id="themeToggle">día/noche</span>
+            <span class="nav-button" id="randomButton">color</span>
+            <a class="nav-button" href="https://www.instagram.com/selfie_roulette/" target="_blank">instagram</a>
+            <span class="nav-button tooltip" id="infoButton">
+                info
+                <span class="tooltip-text">
+                    Selfie Roulette es un proyecto fotográfico interactivo que invita a los participantes a capturar momentos espontáneos. Cada selfie contribuye a una colección única de expresiones y momentos compartidos.
+                </span>
+            </span>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="camera-container">
+            <video id="video" autoplay playsinline></video>
+            <div class="controls">
+                <button id="capture">📸 Sacar Foto</button>
+                <button id="retake" style="display: none;">🔄 Repetir Foto</button>
+            </div>
+        </div>
+        <div class="result-container">
+            <canvas id="canvas"></canvas>
+            <div class="controls">
+                <input type="text" id="photoName" placeholder="Escribí el pie de la foto">
+                <button id="upload" style="display: none;">⬆️ Enviar Foto</button>
+                <button id="confirmUpload" style="display: none;">⚠️ ¿Estás segurx?</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="loading">Subiendo foto...</div>
+    <div id="message">¡Foto enviada con éxito!</div>
+
+    <script type="module">
+        import { createClient } from "https://cdn.skypack.dev/@supabase/supabase-js";
+
+        const supabase = createClient(
+            'https://fwmsmwnsrucgwxxdzrvf.supabase.co',
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3bXNtd25zcnVjZ3d4eGR6cnZmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzI4MjQ4NjgsImV4cCI6MjA0ODQwMDg2OH0.iLMBmVixgjy3UONUtTSmZA4QH6sF6IODqCJuSluTejY'
+        );
+
+        const elements = {
+            video: document.getElementById('video'),
+            canvas: document.getElementById('canvas'),
+            capture: document.getElementById('capture'),
+            retake: document.getElementById('retake'),
+            upload: document.getElementById('upload'),
+            confirmUpload: document.getElementById('confirmUpload'),
+            message: document.getElementById('message'),
+            photoName: document.getElementById('photoName'),
+            loading: document.querySelector('.loading'),
+            title: document.querySelector('h1'),
+            themeToggle: document.getElementById('themeToggle'),
+            randomButton: document.getElementById('randomButton'),
+            infoButton: document.getElementById('infoButton'),
+            instagramButton: document.querySelector('.nav-button[href]')
+        };
+
+        let stream;
+        let isDarkMode = true;
+        let gradientAnimation;
+
+        elements.themeToggle.addEventListener('click', () => {
+            isDarkMode = !isDarkMode;
+            if (gradientAnimation) {
+                clearInterval(gradientAnimation);
+                gradientAnimation = null;
+            }
+            
+            if (isDarkMode) {
+                document.body.style.background = 'rgb(18, 18, 18)';
+                elements.title.style.color = '#ffffff';
+                elements.themeToggle.style.color = '#ffffff';
+                elements.randomButton.style.color = '#ffffff';
+                elements.infoButton.style.color = '#ffffff';
+                elements.instagramButton.style.color = '#ffffff';
+            } else {
+                document.body.style.background = 'white';
+                elements.title.style.color = '#000000';
+                elements.themeToggle.style.color = '#666666';
+                elements.randomButton.style.color = '#666666';
+                elements.infoButton.style.color = '#666666';
+                elements.instagramButton.style.color = '#666666';
+            }
+            document.body.style.animation = 'none';
+        });
+
+        function getRandomColor() {
+            const colorSchemes = [
+                // Complementarios
+                () => {
+                    const hue = Math.random() * 360;
+                    return {
+                        hue1: hue,
+                        hue2: (hue + 180) % 360,
+                        sat: 70 + Math.random() * 30,
+                        light: 50 + Math.random() * 20
+                    };
+                },
+                // Triádicos
+                () => {
+                    const hue = Math.random() * 360;
+                    return {
+                        hue1: hue,
+                        hue2: (hue + 120) % 360,
+                        sat: 60 + Math.random() * 40,
+                        light: 45 + Math.random() * 25
+                    };
+                },
+                // Análogos
+                () => {
+                    const hue = Math.random() * 360;
+                    return {
+                        hue1: hue,
+                        hue2: (hue + 30 + Math.random() * 30) % 360,
+                        sat: 75 + Math.random() * 25,
+                        light: 55 + Math.random() * 15
+                    };
+                },
+                // Cuadrados
+                () => {
+                    const hue = Math.random() * 360;
+                    return {
+                        hue1: hue,
+                        hue2: (hue + 90) % 360,
+                        sat: 65 + Math.random() * 35,
+                        light: 50 + Math.random() * 20
+                    };
+                }
+            ];
+
+            const scheme = colorSchemes[Math.floor(Math.random() * colorSchemes.length)]();
+            const angle = Math.floor(Math.random() * 360);
+            
+            return {
+                gradient: `linear-gradient(${angle}deg, 
+                    hsl(${scheme.hue1}, ${scheme.sat}%, ${scheme.light}%), 
+                    hsl(${scheme.hue2}, ${scheme.sat}%, ${scheme.light}%))`,
+                hue1: scheme.hue1,
+                hue2: scheme.hue2,
+                sat: scheme.sat,
+                light: scheme.light,
+                angle
+            };
+        }
+
+        function animateGradient() {
+            if (gradientAnimation) {
+                clearInterval(gradientAnimation);
+            }
+
+            const scheme = getRandomColor();
+            let angle = scheme.angle;
+            let hueShift = 0;
+
+            document.body.style.backgroundSize = '200% 200%';
+            document.body.style.animation = 'gradientAnimation 15s ease infinite';
+
+            gradientAnimation = setInterval(() => {
+                angle = (angle + 1) % 360;
+                hueShift = (hueShift + 0.5) % 360;
+                
+                const gradient = `linear-gradient(${angle}deg, 
+                    hsl(${(scheme.hue1 + hueShift) % 360}, ${scheme.sat}%, ${scheme.light}%), 
+                    hsl(${(scheme.hue2 + hueShift) % 360}, ${scheme.sat}%, ${scheme.light}%))`;
+                
+                document.body.style.background = gradient;
+            }, 50);
+        }
+
+        async function initCamera() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: "user", width: 1280, height: 720 }
+                });
+                elements.video.srcObject = stream;
+                await elements.video.play();
+            } catch (error) {
+                console.error('Error al acceder a la cámara:', error);
+                alert('No se pudo acceder a la cámara. Verifica los permisos.');
+            }
+        }
+
+        function createAnimation(className) {
+            const animation = document.createElement('div');
+            animation.className = className;
+            document.body.appendChild(animation);
+            setTimeout(() => animation.remove(), className === 'camera-flash' ? 300 : 1500);
+            return animation;
+        }
+
+        elements.randomButton.onclick = () => {
+            animateGradient();
+            elements.title.style.color = '#ffffff';
+            elements.themeToggle.style.color = '#ffffff';
+            elements.randomButton.style.color = '#ffffff';
+            elements.infoButton.style.color = '#ffffff';
+            elements.instagramButton.style.color = '#ffffff';
+        };
+
+        elements.capture.onclick = () => {
+            createAnimation('camera-flash');
+            const context = elements.canvas.getContext('2d');
+            elements.canvas.width = elements.video.videoWidth;
+            elements.canvas.height = elements.video.videoHeight;
+            context.save();
+            context.scale(-1, 1);
+            context.drawImage(elements.video, -elements.canvas.width, 0, elements.canvas.width, elements.canvas.height);
+            context.restore();
+            elements.capture.style.display = 'none';
+            elements.retake.style.display = 'inline';
+            elements.upload.style.display = 'inline';
+            elements.photoName.style.display = 'block';
+        };
+
+        elements.retake.onclick = () => {
+            elements.retake.style.display = 'none';
+            elements.capture.style.display = 'inline';
+            elements.upload.style.display = 'none';
+            elements.confirmUpload.style.display = 'none';
+            elements.photoName.style.display = 'none';
+            elements.photoName.value = '';
+            elements.canvas.getContext('2d').clearRect(0, 0, elements.canvas.width, elements.canvas.height);
+        };
+
+        elements.upload.onclick = () => {
+            elements.upload.style.display = 'none';
+            elements.confirmUpload.style.display = 'inline';
+        };
+
+        elements.confirmUpload.onclick = async () => {
+    const photoName = elements.photoName.value.trim();
+    
+    if (photoName && !/^[a-zA-Z0-9-_]+$/.test(photoName)) {
+        elements.message.textContent = 'El nombre solo puede contener letras, números, guiones y guiones bajos';
+        elements.message.style.backgroundColor = 'rgba(255, 0, 0, 0.9)';
+        elements.message.style.display = 'block';
+        return;
+    }
+
+    elements.loading.classList.add('active');
+
+    elements.canvas.toBlob(async blob => {
+        try {
+            const { error } = await supabase.storage
+                .from('fotos')
+                .upload(photoName ? `${photoName}.png` : `selfie-${Date.now()}.png`, blob);
+
+            if (error) throw error;
+            
+            // Mensaje de éxito
+            elements.message.textContent = '¡Foto enviada con éxito!';
+            elements.message.style.backgroundColor = 'rgba(0, 204, 68, 0.9)';
+            elements.message.style.display = 'block';
+            createAnimation('upload-success');
+            setTimeout(() => elements.message.style.display = 'none', 3000);
+
+            // Deshabilitar la toma de más fotos
+            elements.capture.style.display = 'inline';
+            elements.capture.textContent = '🙏 Gracias por participar';
+            elements.capture.style.backgroundColor = '#666';
+            elements.capture.style.cursor = 'default';
+            elements.capture.disabled = true;
+            elements.capture.onclick = null;
+
+            // Solo ocultar los elementos de control, mantener la foto
+            elements.confirmUpload.style.display = 'none';
+            elements.retake.style.display = 'none';
+            elements.photoName.style.display = 'none';
+            elements.photoName.value = '';
+            elements.upload.style.display = 'none';
+
+        } catch (error) {
+            console.error('Error al subir la foto:', error);
+            elements.message.textContent = 'Error al subir la foto.';
+            elements.message.style.display = 'block';
+            elements.message.style.backgroundColor = 'rgba(255, 0, 0, 0.9)';
+        } finally {
+            elements.loading.classList.remove('active');
+        }
+    }, 'image/png');
+};
+
+        window.addEventListener('beforeunload', () => {
+            if (gradientAnimation) {
+                clearInterval(gradientAnimation);
+            }
+            stream?.getTracks().forEach(track => track.stop());
+        });
+        
+        initCamera();
+
+         // Iniciar en modo oscuro
+         document.body.style.background = 'rgb(18, 18, 18)';
+        elements.title.style.color = '#ffffff';
+        elements.themeToggle.style.color = '#ffffff';
+        elements.randomButton.style.color = '#ffffff';
+        elements.infoButton.style.color = '#ffffff';
+        elements.instagramButton.style.color = '#ffffff';
+
+        
+    </script>
+</body>
+</html>
